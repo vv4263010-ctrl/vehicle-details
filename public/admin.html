@@ -4,17 +4,31 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Panel</title>
-<link rel="stylesheet" href="/style.css">
 <style>
-  .form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; }
-  .form label { font-size: 13px; color: #555; display: block; margin-bottom: 3px; }
-  .form input { width: 100%; padding: 8px; border: 1px solid #bbb; box-sizing: border-box; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
-  th { background: #eee; }
-  .actions { padding: 0 16px 16px; display: flex; gap: 8px; }
-  .tbl { padding: 0 16px 16px; overflow-x: auto; }
-  @media (max-width: 760px) { .form { grid-template-columns: 1fr 1fr; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; }
+  body { background: #f4f5f7; color: #333; padding: 20px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .panel { background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden; }
+  .panel-head { background: #555; color: #fff; padding: 14px 20px; font-size: 18px; font-weight: bold; }
+  .panel-sub { background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px 20px; font-weight: 600; color: #444; }
+  .search { padding: 20px; display: flex; gap: 10px; }
+  .search input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px; }
+  .form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; }
+  .form label { font-size: 12px; color: #555; font-weight: 600; display: block; margin-bottom: 4px; }
+  .form input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; }
+  button { background: #555; color: #fff; border: none; padding: 8px 16px; border-radius: 3px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  button:hover { background: #333; }
+  button.danger { background: #d9534f; }
+  button.danger:hover { background: #c9302c; }
+  .actions { padding: 0 20px 20px; display: flex; gap: 10px; }
+  .msg { padding: 0 20px 10px; font-weight: bold; font-size: 13px; }
+  .tbl { padding: 0 20px 20px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
+  th { background: #f1f1f1; color: #333; font-weight: bold; }
+  .hidden { display: none !important; }
+  @media (max-width: 768px) { .form { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .form { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -24,7 +38,7 @@
     <div class="panel-head">Admin Login</div>
     <form class="search" id="lf">
       <input type="password" id="pw" placeholder="Password" required>
-      <button>Login</button>
+      <button type="submit">Login</button>
     </form>
     <div class="msg" id="lmsg"></div>
   </div>
@@ -37,13 +51,13 @@
       <div class="actions">
         <button type="submit">Save</button>
         <button type="button" id="clear">Clear</button>
-        <button type="button" id="logout" style="margin-left:auto">Logout</button>
+        <button type="button" id="logout" style="margin-left:auto; background:#777;">Logout</button>
       </div>
     </form>
     <div class="msg" id="msg"></div>
     <div class="panel-sub">Records</div>
     <div class="tbl"><table>
-      <thead><tr><th>VCC No</th><th>Chassis No</th><th>Brand</th><th>Model</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>VCC No</th><th>Chassis No</th><th>Brand</th><th>Model</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
   </div>
