@@ -4,25 +4,67 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vehicle Details</title>
-<link rel="stylesheet" href="/style.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+  body { background: #f5f5f5; color: #333; padding: 20px; font-size: 13px; }
+  .wrap { max-width: 1000px; margin: 0 auto; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); overflow: hidden; }
+  
+  /* Header */
+  .header { background: #555; color: #fff; padding: 14px 20px; font-size: 18px; font-weight: bold; }
+  .subheader { background: #f0f0f0; border-bottom: 1px solid #ddd; padding: 10px 20px; font-weight: bold; color: #444; }
+  
+  /* Search Box */
+  .search-section { padding: 20px; background: #fafafa; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
+  .search-section input { padding: 8px 12px; width: 300px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; outline: none; }
+  .search-section button { background: #555; color: #fff; border: none; padding: 8px 18px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+  .search-section button:hover { background: #333; }
+  
+  /* Messages */
+  .msg { padding: 15px 20px; color: #c9302c; font-weight: bold; }
+  .hidden { display: none !important; }
+  
+  /* Details Grid Table (Two Columns Design) */
+  .details-container { padding: 20px; }
+  .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #e0e0e0; }
+  .field-row { display: flex; border-bottom: 1px solid #eee; min-height: 38px; align-items: center; }
+  .field-row:nth-child(even) { background: #fdfdfd; }
+  .field-label { width: 45%; padding: 8px 12px; font-weight: bold; color: #555; border-right: 1px solid #f0f0f0; background: #fafafa; }
+  .field-value { width: 55%; padding: 8px 12px; color: #111; word-break: break-word; }
+  
+  /* Highlight VCC Status */
+  .status-printed { color: #d9534f; font-weight: bold; }
+  
+  /* Footer */
+  .footer { text-align: center; padding: 15px; background: #f9f9f9; border-top: 1px solid #eee; color: #777; font-size: 12px; }
+
+  @media (max-width: 768px) {
+    .details-grid { grid-template-columns: 1fr; }
+    .search-section input { width: 100%; }
+    .search-section { flex-direction: column; }
+    .search-section button { width: 100%; }
+  }
+</style>
 </head>
 <body>
+
 <div class="wrap">
-  <div class="panel">
-    <div class="panel-head">View VCC Details</div>
-    <div class="panel-sub">VCC/Vehicle Details</div>
+  <div class="header">View VCC Details</div>
+  <div class="subheader">VCC/Vehicle Details</div>
 
-    <form class="search" id="f">
-      <input id="q" placeholder="Enter Record No or Chassis No" autocomplete="off" required>
-      <button>Search</button>
-    </form>
-    <div class="msg" id="msg"></div>
-
-    <div class="card hidden" id="card">
-      <div class="grid" id="grid"></div>
-    </div>
+  <div class="search-section">
+    <input type="text" id="q" placeholder="Enter Record No or Chassis No" autocomplete="off">
+    <button type="button" id="searchBtn">Search</button>
   </div>
-  <div class="footer"></div> <!-- غيّر الاسم هنا -->
+
+  <div class="msg hidden" id="msg"></div>
+
+  <div class="details-container hidden" id="detailsBox">
+    <div class="details-grid" id="grid"></div>
+  </div>
+
+  <div class="footer">
+    &copy; Your Company Name
+  </div>
 </div>
 
 <script>
@@ -42,20 +84,70 @@ const ROWS = [
 
 const $ = id => document.getElementById(id);
 
-$('f').addEventListener('submit', async e => {
-  e.preventDefault();
-  $('msg').textContent = ''; $('card').classList.add('hidden');
-  const r = await fetch('/api/record?q=' + encodeURIComponent($('q').value));
-  const d = await r.json();
-  if (!r.ok) { $('msg').textContent = d.error; return; }
-  const g = $('grid'); g.innerHTML = '';
-  const add = (cls, txt) => { const x = document.createElement('div'); x.className = cls; x.textContent = txt; g.appendChild(x); };
+async function doSearch() {
+  const q = $('q').value.trim();
+  if (!q) {
+    showMsg('الرجاء كتابة رقم السجل أو رقم الشاسيه');
+    return;
+  }
+  
+  $('msg').classList.add('hidden');
+  $('detailsBox').classList.add('hidden');
+  
+  try {
+    const r = await fetch('/api/record?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    
+    if (!r.ok) {
+      showMsg(d.error || 'لا توجد بيانات مطابقة');
+      return;
+    }
+    
+    renderDetails(d);
+  } catch (e) {
+    showMsg('حدث خطأ أثناء الاتصال بالسيرفر');
+  }
+}
+
+function renderDetails(data) {
+  const g = $('grid');
+  g.innerHTML = '';
+  
   ROWS.forEach(([l1, k1, l2, k2]) => {
-    add('l', l1 + ' :'); add('v', d[k1] || '');
-    add('l', l2 + ' :'); add('v', d[k2] || '');
+    // Left column
+    const r1 = document.createElement('div');
+    r1.className = 'field-row';
+    const val1 = data[k1] || '';
+    r1.innerHTML = `<div class="field-label">${l1}</div><div class="field-value">${val1}</div>`;
+    g.appendChild(r1);
+
+    // Right column
+    if (l2) {
+      const r2 = document.createElement('div');
+      r2.className = 'field-row';
+      let val2 = data[k2] || '';
+      let extraClass = (k2 === 'vccStatus' && val2) ? 'status-printed' : '';
+      r2.innerHTML = `<div class="field-label">${l2}</div><div class="field-value ${extraClass}">${val2}</div>`;
+      g.appendChild(r2);
+    } else {
+      const r2 = document.createElement('div');
+      r2.className = 'field-row';
+      r2.innerHTML = `<div class="field-label"></div><div class="field-value"></div>`;
+      g.appendChild(r2);
+    }
   });
-  $('card').classList.remove('hidden');
-});
+
+  $('detailsBox').classList.remove('hidden');
+}
+
+function showMsg(m) {
+  $('msg').textContent = m;
+  $('msg').classList.remove('hidden');
+}
+
+$('searchBtn').onclick = doSearch;
+$('q').addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
 </script>
+
 </body>
 </html>
