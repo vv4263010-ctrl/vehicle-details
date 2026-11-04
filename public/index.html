@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vehicle Details</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">View VCC Details</div>
+    <div class="panel-sub">VCC/Vehicle Details</div>
+
+    <form class="search" id="f">
+      <input id="q" placeholder="Enter Record No or Chassis No" autocomplete="off" required>
+      <button>Search</button>
+    </form>
+    <div class="msg" id="msg"></div>
+
+    <div class="card hidden" id="card">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+  <div class="footer"></div> <!-- غيّر الاسم هنا -->
+</div>
+
+<script>
+const ROWS = [
+  ['VCC No', 'vccNo', 'VCC Status', 'vccStatus'],
+  ['VCC Generation Date', 'vccGenerationDate', 'Chassis No', 'chassisNo'],
+  ['Engine Number', 'engineNumber', 'Year of Built', 'yearOfBuilt'],
+  ['Vehicle Drive', 'vehicleDrive', 'Country of Origin', 'countryOfOrigin'],
+  ['Engine Capacity', 'engineCapacity', 'Carriage Capacity', 'carriageCapacity'],
+  ['Passenger Capacity', 'passengerCapacity', 'Vehicle Model', 'vehicleModel'],
+  ['Vehicle Brand Name', 'vehicleBrandName', 'Vehicle Type', 'vehicleType'],
+  ['Vehicle Color', 'vehicleColor', 'Specification Standard Name', 'specificationStandardName'],
+  ['Declaration Number', 'declarationNumber', 'Declaration Date', 'declarationDate'],
+  ['Owner Code', 'ownerCode', 'Owner Name', 'ownerName'],
+  ['Print Remarks', 'printRemarks', '', '']
+];
+
+const $ = id => document.getElementById(id);
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('msg').textContent = ''; $('card').classList.add('hidden');
+  const r = await fetch('/api/record?q=' + encodeURIComponent($('q').value));
+  const d = await r.json();
+  if (!r.ok) { $('msg').textContent = d.error; return; }
+  const g = $('grid'); g.innerHTML = '';
+  const add = (cls, txt) => { const x = document.createElement('div'); x.className = cls; x.textContent = txt; g.appendChild(x); };
+  ROWS.forEach(([l1, k1, l2, k2]) => {
+    add('l', l1 + ' :'); add('v', d[k1] || '');
+    add('l', l2 + ' :'); add('v', d[k2] || '');
+  });
+  $('card').classList.remove('hidden');
+});
+</script>
+</body>
+</html>
