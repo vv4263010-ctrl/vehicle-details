@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Panel</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; }
+  .form label { font-size: 13px; color: #555; display: block; margin-bottom: 3px; }
+  .form input { width: 100%; padding: 8px; border: 1px solid #bbb; box-sizing: border-box; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+  th { background: #eee; }
+  .actions { padding: 0 16px 16px; display: flex; gap: 8px; }
+  .tbl { padding: 0 16px 16px; overflow-x: auto; }
+  @media (max-width: 760px) { .form { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="panel" id="loginBox">
+    <div class="panel-head">Admin Login</div>
+    <form class="search" id="lf">
+      <input type="password" id="pw" placeholder="Password" required>
+      <button>Login</button>
+    </form>
+    <div class="msg" id="lmsg"></div>
+  </div>
+
+  <div class="panel hidden" id="app">
+    <div class="panel-head">Admin Panel</div>
+    <div class="panel-sub">Add / Edit Vehicle Record (same VCC No = update)</div>
+    <form id="rf">
+      <div class="form" id="fields"></div>
+      <div class="actions">
+        <button type="submit">Save</button>
+        <button type="button" id="clear">Clear</button>
+        <button type="button" id="logout" style="margin-left:auto">Logout</button>
+      </div>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div class="panel-sub">Records</div>
+    <div class="tbl"><table>
+      <thead><tr><th>VCC No</th><th>Chassis No</th><th>Brand</th><th>Model</th><th>Status</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+const F = [
+  ['vccNo', 'VCC No *'],
+  ['vccStatus', 'VCC Status'],
+  ['vccGenerationDate', 'VCC Generation Date'],
+  ['chassisNo', 'Chassis No'],
+  ['engineNumber', 'Engine Number'],
+  ['yearOfBuilt', 'Year of Built'],
+  ['vehicleDrive', 'Vehicle Drive'],
+  ['countryOfOrigin', 'Country of Origin'],
+  ['engineCapacity', 'Engine Capacity'],
+  ['carriageCapacity', 'Carriage Capacity'],
+  ['passengerCapacity', 'Passenger Capacity'],
+  ['vehicleModel', 'Vehicle Model'],
+  ['vehicleBrandName', 'Vehicle Brand Name'],
+  ['vehicleType', 'Vehicle Type'],
+  ['vehicleColor', 'Vehicle Color'],
+  ['specificationStandardName', 'Specification Standard Name'],
+  ['declarationNumber', 'Declaration Number'],
+  ['declarationDate', 'Declaration Date'],
+  ['ownerCode', 'Owner Code'],
+  ['ownerName', 'Owner Name'],
+  ['printRemarks', 'Print Remarks']
+];
+
+const $ = id => document.getElementById(id);
+let records = [];
+
+$('fields').innerHTML = F.map(([k, l]) =>
+  `<div><label for="f_${k}">${l}</label><input id="f_${k}" name="${k}"></div>`).join('');
+
+async function api(url, opt) {
+  const r = await fetch(url, opt);
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401 && url !== '/api/admin/login') showLogin();
+  return { ok: r.ok, d };
+}
+function showLogin() { $('loginBox').classList.remove('hidden'); $('app').classList.add('hidden'); }
+function showApp() { $('loginBox').classList.add('hidden'); $('app').classList.remove('hidden'); load(); }
+
+async function load() {
+  const { ok, d } = await api('/api/admin/records');
+  if (!ok) return;
+  records = d;
+  const tb = $('rows'); tb.innerHTML = '';
+  records.forEach(r => {
+    const tr = document.createElement('tr');
+    [r.vccNo, r.chassisNo, r.vehicleBrandName, r.vehicleModel, r.vccStatus].forEach(t => {
+      const td = document.createElement('td'); td.textContent = t || ''; tr.appendChild(td);
+    });
+    const td = document.createElement('td');
+    const e = document.createElement('button'); e.textContent = 'Edit'; e.onclick = () => fill(r);
+    const x = document.createElement('button'); x.textContent = 'Delete'; x.className = 'danger'; x.style.marginLeft = '6px';
+    x.onclick = () => del(r.vccNo);
+    td.append(e, x); tr.appendChild(td); tb.appendChild(tr);
+  });
+}
+
+function fill(r) { F.forEach(([k]) => $('f_' + k).value = r[k] || ''); window.scrollTo(0, 0); }
+async function del(id) {
+  if (!confirm('Delete ' + id + ' ?')) return;
+  await api('/api/admin/records/' + encodeURIComponent(id), { method: 'DELETE' });
+  load();
+}
+
+$('lf').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { ok, d } = await api('/api/admin/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: $('pw').value })
+  });
+  if (ok) { $('pw').value = ''; showApp(); } else $('lmsg').textContent = d.error || 'Error';
+});
+
+$('rf').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = {}; F.forEach(([k]) => body[k] = $('f_' + k).value);
+  const { ok, d } = await api('/api/admin/records', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  $('msg').style.color = ok ? '#2a7' : '#a33';
+  $('msg').textContent = ok ? 'Saved' : (d.error || 'Error');
+  if (ok) { $('rf').reset(); load(); }
+});
+
+$('clear').onclick = () => $('rf').reset();
+$('logout').onclick = async () => { await api('/api/admin/logout', { method: 'POST' }); showLogin(); };
+
+api('/api/admin/records').then(({ ok }) => { if (ok) showApp(); });
+</script>
+</body>
+</html>
