@@ -13,6 +13,12 @@
   .header { background: #555; color: #fff; padding: 14px 20px; font-size: 18px; font-weight: bold; }
   .subheader { background: #f0f0f0; border-bottom: 1px solid #ddd; padding: 10px 20px; font-weight: bold; color: #444; }
   
+  /* Search Box */
+  .search-section { padding: 20px; background: #fafafa; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
+  .search-section input { padding: 8px 12px; width: 300px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; outline: none; }
+  .search-section button { background: #555; color: #fff; border: none; padding: 8px 18px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+  .search-section button:hover { background: #333; }
+  
   /* Messages */
   .msg { padding: 15px 20px; color: #c9302c; font-weight: bold; }
   .hidden { display: none !important; }
@@ -33,6 +39,9 @@
 
   @media (max-width: 768px) {
     .details-grid { grid-template-columns: 1fr; }
+    .search-section input { width: 100%; }
+    .search-section { flex-direction: column; }
+    .search-section button { width: 100%; }
   }
 </style>
 </head>
@@ -41,6 +50,12 @@
 <div class="wrap">
   <div class="header">View VCC Details</div>
   <div class="subheader">VCC/Vehicle Details</div>
+
+  <!-- قسم البحث الرئيسي -->
+  <div class="search-section" id="searchBox">
+    <input type="text" id="q" placeholder="Enter Record No or Chassis No" autocomplete="off">
+    <button type="button" id="searchBtn">Search</button>
+  </div>
 
   <div class="msg hidden" id="msg"></div>
 
@@ -70,9 +85,10 @@ const ROWS = [
 
 const $ = id => document.getElementById(id);
 
-async function loadVehicleData(q) {
+async function doSearch(queryText) {
+  const q = queryText || $('q').value.trim();
   if (!q) {
-    showMsg('الرجاء تحديد رقم المركبة في الرابط');
+    showMsg('الرجاء كتابة رقم السجل أو رقم الشاسيه');
     return;
   }
   
@@ -122,6 +138,8 @@ function renderDetails(data) {
     }
   });
 
+  // إخفاء صندوق البحث بعد نجاح العثور على البيانات
+  $('searchBox').classList.add('hidden');
   $('detailsBox').classList.remove('hidden');
 }
 
@@ -130,11 +148,17 @@ function showMsg(m) {
   $('msg').classList.remove('hidden');
 }
 
-// قراءة رقم السجل أو الشاسيه تلقائياً من الرابط عند فتح الصفحة
+$('searchBtn').onclick = () => doSearch();
+$('q').addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
+
+// البحث التلقائي عند فتح الرابط المباشر وإخفاء خانة البحث
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const query = urlParams.get('q');
-  loadVehicleData(query);
+  const autoQuery = urlParams.get('q');
+  if (autoQuery) {
+    $('q').value = autoQuery;
+    doSearch(autoQuery);
+  }
 });
 </script>
 
