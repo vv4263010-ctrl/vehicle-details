@@ -113,22 +113,21 @@ async function load() {
   records.forEach(r => {
     const tr = document.createElement('tr');
     
-    // إظهار التفاصيل الأساسية في الجدول
     [r.vccNo, r.chassisNo, r.vehicleBrandName, r.vehicleModel, r.vccStatus].forEach(t => {
       const td = document.createElement('td'); td.textContent = t || ''; tr.appendChild(td);
     });
 
-    // عمود زر نسخ الرابط الذي يحتوي على رقم الـ VCC ورقم الشاسيه معا
+    // زر النسخ المباشر
     const linkTd = document.createElement('td');
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy Link';
     copyBtn.className = 'copy-btn';
     copyBtn.onclick = () => {
-      const vccVal = r.vccNo || '';
-      const chassisVal = r.chassisNo || '';
+      const vcc = r.vccNo || '';
+      const secret = r.declarationNumber || '3c2823266c5441f888def4049bce1d1a';
       
-      // بناء الرابط بالبيانين (VCC Number & Chassis Number)
-      const clientUrl = `${window.location.origin}/?q=${encodeURIComponent(vccVal)}&chassis=${encodeURIComponent(chassisVal)}`;
+      // اللينك يرسل q بـ VCC No ومعه الـ secretKey ليعمل مع index.html الحالي فورا
+      const clientUrl = `${window.location.origin}/?q=${encodeURIComponent(vcc)}&value(vccNo)=${encodeURIComponent(vcc)}&value(secretKey)=${encodeURIComponent(secret)}`;
       
       navigator.clipboard.writeText(clientUrl).then(() => {
         const oldText = copyBtn.textContent;
@@ -143,7 +142,6 @@ async function load() {
     linkTd.appendChild(copyBtn);
     tr.appendChild(linkTd);
 
-    // عمود التحكم (Edit / Delete)
     const td = document.createElement('td');
     const e = document.createElement('button'); e.textContent = 'Edit'; e.onclick = () => fill(r);
     const x = document.createElement('button'); x.textContent = 'Delete'; x.className = 'danger'; x.style.marginLeft = '6px';
