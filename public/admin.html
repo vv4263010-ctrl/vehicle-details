@@ -20,6 +20,8 @@
   button:hover { background: #333; }
   button.danger { background: #d9534f; }
   button.danger:hover { background: #c9302c; }
+  button.copy-btn { background: #0275d8; }
+  button.copy-btn:hover { background: #025aa5; }
   .actions { padding: 0 20px 20px; display: flex; gap: 10px; }
   .msg { padding: 0 20px 10px; font-weight: bold; font-size: 13px; }
   .tbl { padding: 0 20px 20px; overflow-x: auto; }
@@ -57,7 +59,7 @@
     <div class="msg" id="msg"></div>
     <div class="panel-sub">Records</div>
     <div class="tbl"><table>
-      <thead><tr><th>VCC No</th><th>Chassis No</th><th>Brand</th><th>Model</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>VCC No</th><th>Chassis No</th><th>Brand</th><th>Model</th><th>Status</th><th>Public Link</th><th>Actions</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
   </div>
@@ -110,14 +112,41 @@ async function load() {
   const tb = $('rows'); tb.innerHTML = '';
   records.forEach(r => {
     const tr = document.createElement('tr');
+    
+    // إظهار التفاصيل الأساسية
     [r.vccNo, r.chassisNo, r.vehicleBrandName, r.vehicleModel, r.vccStatus].forEach(t => {
       const td = document.createElement('td'); td.textContent = t || ''; tr.appendChild(td);
     });
+
+    // عمود زر النسخ المباشر للرابط
+    const linkTd = document.createElement('td');
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy Link';
+    copyBtn.className = 'copy-btn';
+    copyBtn.onclick = () => {
+      const queryVal = r.chassisNo || r.vccNo;
+      const clientUrl = `${window.location.origin}/?q=${encodeURIComponent(queryVal)}`;
+      navigator.clipboard.writeText(clientUrl).then(() => {
+        const oldText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        copyBtn.style.background = '#2a7';
+        setTimeout(() => {
+          copyBtn.textContent = oldText;
+          copyBtn.style.background = '';
+        }, 2000);
+      });
+    };
+    linkTd.appendChild(copyBtn);
+    tr.appendChild(linkTd);
+
+    // عمود التحكم (تعديل وحذف)
     const td = document.createElement('td');
     const e = document.createElement('button'); e.textContent = 'Edit'; e.onclick = () => fill(r);
     const x = document.createElement('button'); x.textContent = 'Delete'; x.className = 'danger'; x.style.marginLeft = '6px';
     x.onclick = () => del(r.vccNo);
-    td.append(e, x); tr.appendChild(td); tb.appendChild(tr);
+    td.append(e, x); tr.appendChild(td); 
+
+    tb.appendChild(tr);
   });
 }
 
