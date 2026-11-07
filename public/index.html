@@ -138,7 +138,7 @@ function renderDetails(data) {
     }
   });
 
-  // إخفاء صندوق البحث بعد نجاح العثور على البيانات
+  // إخفاء صندوق البحث عند وجود البيانات
   $('searchBox').classList.add('hidden');
   $('detailsBox').classList.remove('hidden');
 }
@@ -151,10 +151,11 @@ function showMsg(m) {
 $('searchBtn').onclick = () => doSearch();
 $('q').addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
 
-// البحث التلقائي عند فتح الرابط المباشر وإخفاء خانة البحث
+// قراءة البرامترات بالتنسيق الجديد تلقائياً وإخفاء البحث
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const autoQuery = urlParams.get('q');
+  // قراءة value(vccNo) أو q
+  const autoQuery = urlParams.get('value(vccNo)') || urlParams.get('q');
   if (autoQuery) {
     $('q').value = autoQuery;
     doSearch(autoQuery);
