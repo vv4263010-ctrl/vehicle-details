@@ -117,7 +117,7 @@ async function load() {
       const td = document.createElement('td'); td.textContent = t || ''; tr.appendChild(td);
     });
 
-    // زر النسخ المباشر
+    // زر نسخ اللينك بالصيغة المطلوبة تماماً
     const linkTd = document.createElement('td');
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy Link';
@@ -126,8 +126,8 @@ async function load() {
       const vcc = r.vccNo || '';
       const secret = r.declarationNumber || '3c2823266c5441f888def4049bce1d1a';
       
-      // اللينك يرسل q بـ VCC No ومعه الـ secretKey ليعمل مع index.html الحالي فورا
-      const clientUrl = `${window.location.origin}/?q=${encodeURIComponent(vcc)}&value(vccNo)=${encodeURIComponent(vcc)}&value(secretKey)=${encodeURIComponent(secret)}`;
+      // التنسيق المطلوب بالظبط:
+      const clientUrl = `${window.location.origin}/?value(vccNo)=${encodeURIComponent(vcc)}&value(secretKey)=${encodeURIComponent(secret)}`;
       
       navigator.clipboard.writeText(clientUrl).then(() => {
         const oldText = copyBtn.textContent;
